@@ -1,0 +1,69 @@
+You are a senior full-stack developer. Help me build an AI-powered test case generator web application from scratch using the following stack:
+
+**Frontend:** React (with TailwindCSS or Material UI)  
+**Backend:** Node.js (Express or Fastify)  
+**AI:** Use any free AI API like Gemini, Ollama, or OpenAI's free tier to generate code  
+**Auth/API:** GitHub OAuth + GitHub REST API  
+**Optional:** GitHub PR creation via API
+
+---
+
+### 🧩 Application Requirements:
+
+#### 🔐 1. GitHub Integration
+- Authenticate user with GitHub OAuth.
+- After login, list all user’s GitHub repositories.
+- When a user selects a repo, list all source code files (e.g., `.js`, `.ts`, `.py`, `.jsx`, etc.) in a frontend UI.
+
+#### 📁 2. File Selection + AI Test Suggestion
+- Allow user to select one or more files.
+- Fetch content of each selected file using GitHub API.
+- Send file content to AI and generate:
+  - Test case **summaries**
+  - Later, generate **actual test case code**
+- Frameworks may include:
+  - JEST (for React/Node)
+  - Unittest/Selenium (for Python)
+  - Mocha, Pytest, etc.
+
+#### 📄 3. Display Test Case Summaries
+- Show all AI-generated summaries in a card/grid layout.
+- Allow user to select a summary and generate full test case code.
+- Show output in a code block UI with a copy/download button.
+
+#### 🚀 4. Generate and Display Test Case Code
+- On click of “Generate Code” for a summary, send refined prompt to AI to generate actual test case code.
+- Display code in a clean, styled code block in UI.
+
+#### 🌱 5. (Optional Bonus) GitHub PR Creation
+- Use GitHub API to:
+  - Create a new branch in the selected repo
+  - Commit generated test case files to it
+  - Create a pull request (PR) with title like `Auto-generated test cases`
+- This step is optional but earns bonus points.
+
+---
+
+### 📽️ Output Expected:
+- A clean and responsive UI
+- Screen recording: demo the end-to-end functionality
+- README with instructions, screenshots, and demo video link
+
+---
+
+### 🧠 Other Notes:
+- Use clean and modular folder structure:
+  - `frontend/src/components`, `frontend/src/pages`, `backend/routes`, etc.
+- Use `.env` files to manage GitHub Client ID/Secret and AI API Keys.
+- Ensure loading states, error handling, and toasts/snackbars.
+- Prioritize UX (highlight selected files, loading spinners, etc.)
+- Keep architecture scalable and deployable on Vercel (frontend) + Render or Fly.io (backend).
+
+---
+
+Generate:
+1. Project structure with folders for backend and frontend.
+2. GitHub OAuth flow and repo/file listing code.
+3. UI components for file selection and test case summary.
+4. Backend routes for fetching file content and calling AI.
+5. Optional PR creation service using GitHub API.
