@@ -179,6 +179,7 @@ Your app should load and be able to communicate with the backend.
 - Ensure build commands are correct
 - Verify Node.js version compatibility
 - **Terser Error**: If you get "terser not found" error, the Vite config has been updated to use esbuild instead
+- **White Screen/Module Loading Error**: If you see "Failed to load module script" errors, the Vercel routing has been fixed to properly serve JavaScript assets
 
 ### Debug Steps:
 
