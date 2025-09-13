@@ -19,14 +19,13 @@ export const config = {
   // Session Configuration
   session: {
     secret: process.env.SESSION_SECRET || "your-session-secret-key",
-    resave: true, // Force session to be saved back to session store
-    saveUninitialized: true, // Force a session that is "uninitialized" to be saved to the store
+    resave: false,
+    saveUninitialized: false,
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: undefined, // Don't set domain for cross-origin requests
     },
   },
 

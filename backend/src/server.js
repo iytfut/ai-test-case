@@ -7,7 +7,6 @@ import passport from "passport";
 import rateLimit from "express-rate-limit";
 import { config } from "./config/database.js";
 import corsMiddleware from "./middleware/cors.js";
-import MemorySessionStore from "./middleware/sessionStore.js";
 
 // Import routes
 import authRoutes from "./routes/auth.js";
@@ -56,10 +55,8 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Session configuration
-const sessionStore = new MemorySessionStore();
 app.use(
   session({
-    store: sessionStore,
     secret: config.session.secret,
     resave: config.session.resave,
     saveUninitialized: config.session.saveUninitialized,
@@ -95,17 +92,16 @@ app.get("/debug/session", (req, res) => {
   });
 });
 
-// Debug endpoint for session store
+// Debug endpoint for session store (simplified)
 app.get("/debug/session-store", (req, res) => {
   res.json({
-    totalSessions: sessionStore.sessions.size,
-    sessions: Array.from(sessionStore.sessions.entries()).map(
-      ([id, session]) => ({
-        id,
-        user: session.passport?.user?.username || "no user",
-        lastAccess: session.lastAccess || "unknown",
-      })
-    ),
+    message: "Session store debug endpoint",
+    note: "Using default memory store - sessions reset on server restart",
+    currentSession: {
+      id: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user ? req.user.username : "no user",
+    },
   });
 });
 
