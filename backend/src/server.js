@@ -7,6 +7,7 @@ import passport from "passport";
 import rateLimit from "express-rate-limit";
 import { config } from "./config/database.js";
 import corsMiddleware from "./middleware/cors.js";
+import MemorySessionStore from "./middleware/sessionStore.js";
 
 // Import routes
 import authRoutes from "./routes/auth.js";
@@ -55,8 +56,10 @@ app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 // Session configuration
+const sessionStore = new MemorySessionStore();
 app.use(
   session({
+    store: sessionStore,
     secret: config.session.secret,
     resave: config.session.resave,
     saveUninitialized: config.session.saveUninitialized,
@@ -89,6 +92,20 @@ app.get("/debug/session", (req, res) => {
     user: req.user,
     session: req.session,
     cookies: req.cookies,
+  });
+});
+
+// Debug endpoint for session store
+app.get("/debug/session-store", (req, res) => {
+  res.json({
+    totalSessions: sessionStore.sessions.size,
+    sessions: Array.from(sessionStore.sessions.entries()).map(
+      ([id, session]) => ({
+        id,
+        user: session.passport?.user?.username || "no user",
+        lastAccess: session.lastAccess || "unknown",
+      })
+    ),
   });
 });
 

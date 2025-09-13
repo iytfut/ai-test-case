@@ -13,6 +13,8 @@ const corsOptions = {
       "http://localhost:3000", // Alternative local port
     ].filter(Boolean); // Remove undefined values
 
+    console.log("CORS check - Origin:", origin, "Allowed:", allowedOrigins);
+
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
@@ -30,8 +32,9 @@ const corsOptions = {
     "Origin",
     "Access-Control-Request-Method",
     "Access-Control-Request-Headers",
+    "Cookie",
   ],
-  exposedHeaders: ["Content-Range", "X-Content-Range"],
+  exposedHeaders: ["Content-Range", "X-Content-Range", "Set-Cookie"],
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
