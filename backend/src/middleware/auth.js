@@ -1,4 +1,5 @@
 import passport from "passport";
+import { config } from "../config/database.js";
 
 // Middleware to check if user is authenticated
 export const isAuthenticated = (req, res, next) => {
@@ -13,7 +14,7 @@ export const isNotAuthenticated = (req, res, next) => {
   if (!req.isAuthenticated()) {
     return next();
   }
-  res.redirect("/dashboard");
+  res.redirect(`${config.cors.origin}/dashboard`);
 };
 
 // Middleware to handle GitHub authentication
@@ -23,8 +24,8 @@ export const authenticateGitHub = passport.authenticate("github", {
 
 // Middleware to handle GitHub callback
 export const authenticateGitHubCallback = passport.authenticate("github", {
-  failureRedirect: "ai-test-case-nu.vercel.app/login",
-  successRedirect: "ai-test-case-nu.vercel.app/dashboard",
+  failureRedirect: `${config.cors.origin}/login`,
+  successRedirect: `${config.cors.origin}/dashboard`,
 });
 
 // Middleware to serialize user for session
