@@ -18,16 +18,19 @@ export const config = {
 
   // Session Configuration
   session: {
-    secret: process.env.SESSION_SECRET || "your-session-secret-key",
-    resave: true, // Force session to be saved back to session store
-    saveUninitialized: true, // Force a session that is "uninitialized" to be saved to the store
+    secret:
+      process.env.SESSION_SECRET ||
+      "your-session-secret-key-change-this-in-production",
+    resave: false, // Don't save session if unmodified
+    saveUninitialized: false, // Don't create session until something stored
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      httpOnly: false, // Allow client-side access for debugging
+      httpOnly: true, // Security: prevent XSS attacks
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: undefined, // Don't set domain for cross-origin requests
+      domain: process.env.NODE_ENV === "production" ? undefined : undefined,
     },
+    name: "test-case-generator.sid", // Custom session name
   },
 
   // AI API Configuration

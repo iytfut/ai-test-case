@@ -27,6 +27,8 @@ export const AuthProvider = ({ children }) => {
       const error = urlParams.get("error");
       console.error("OAuth error:", error);
       toast.error(`Authentication failed: ${error}`);
+      // Clear the error from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
@@ -34,16 +36,26 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/status`, {
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
         const data = await response.json();
-        if (data.authenticated) {
+        console.log("Auth status response:", data);
+        if (data.authenticated && data.user) {
           setUser(data.user);
+        } else {
+          setUser(null);
         }
+      } else {
+        console.error("Auth check failed with status:", response.status);
+        setUser(null);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
+      setUser(null);
     } finally {
       setLoading(false);
     }

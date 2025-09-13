@@ -3,6 +3,7 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 import session from "express-session";
+import MongoStore from "connect-mongo";
 import passport from "passport";
 import rateLimit from "express-rate-limit";
 import { config } from "./config/database.js";
@@ -54,14 +55,27 @@ app.use("/api/", limiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Session configuration
+// Session configuration with MongoDB store (fallback to memory store if MongoDB unavailable)
+let sessionStore;
+try {
+  sessionStore = MongoStore.create({
+    mongoUrl:
+      process.env.MONGODB_URI ||
+      "mongodb://localhost:27017/test-case-generator",
+    collectionName: "sessions",
+    ttl: 24 * 60 * 60, // 24 hours
+    touchAfter: 24 * 3600, // lazy session update
+  });
+  console.log("✅ MongoDB session store initialized");
+} catch (error) {
+  console.warn("⚠️ MongoDB not available, using memory store:", error.message);
+  sessionStore = undefined; // Will use default memory store
+}
+
 app.use(
   session({
-    secret: config.session.secret,
-    resave: config.session.resave,
-    saveUninitialized: config.session.saveUninitialized,
-    cookie: config.session.cookie,
-    name: "test-case-generator.sid", // Custom session name
+    ...config.session,
+    store: sessionStore,
   })
 );
 
@@ -89,14 +103,19 @@ app.get("/debug/session", (req, res) => {
     user: req.user,
     session: req.session,
     cookies: req.cookies,
+    headers: {
+      cookie: req.headers.cookie,
+      origin: req.headers.origin,
+      referer: req.headers.referer,
+    },
   });
 });
 
-// Debug endpoint for session store (simplified)
+// Debug endpoint for session store
 app.get("/debug/session-store", (req, res) => {
   res.json({
     message: "Session store debug endpoint",
-    note: "Using default memory store - sessions reset on server restart",
+    storeType: sessionStore ? "MongoDB" : "Memory",
     currentSession: {
       id: req.sessionID,
       isAuthenticated: req.isAuthenticated(),

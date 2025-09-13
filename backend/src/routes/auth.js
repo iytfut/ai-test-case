@@ -40,16 +40,25 @@ passport.use(
   )
 );
 
-// Serialize user for session
+// Serialize user for session - store only essential data
 passport.serializeUser((user, done) => {
   console.log("Serializing user:", user.username, user.id);
-  done(null, user);
+  // Store only essential user data, not the entire user object
+  const userData = {
+    id: user.id,
+    username: user.username,
+    displayName: user.displayName,
+    email: user.email,
+    avatar: user.avatar,
+  };
+  done(null, userData);
 });
 
 // Deserialize user from session
-passport.deserializeUser((user, done) => {
-  console.log("Deserializing user:", user ? user.username : "no user");
-  done(null, user);
+passport.deserializeUser((userData, done) => {
+  console.log("Deserializing user:", userData ? userData.username : "no user");
+  // The userData is already the minimal user object
+  done(null, userData);
 });
 
 // Login route - redirect to GitHub OAuth
@@ -68,25 +77,19 @@ router.get("/callback", (req, res, next) => {
       return res.redirect(`${config.cors.origin}/login?error=oauth_failed`);
     }
 
+    // Log in the user
     req.logIn(user, (loginErr) => {
       if (loginErr) {
         console.error("Login error:", loginErr);
         return res.redirect(`${config.cors.origin}/login?error=login_failed`);
       }
 
-      // Save the session explicitly
-      req.session.save((saveErr) => {
-        if (saveErr) {
-          console.error("Session save error:", saveErr);
-          return res.redirect(
-            `${config.cors.origin}/login?error=session_save_failed`
-          );
-        }
+      console.log("User logged in successfully:", user.username);
+      console.log("Session ID:", req.sessionID);
+      console.log("User in session:", req.user);
 
-        console.log("User logged in successfully:", user.username);
-        console.log("Session saved, user in session:", req.user);
-        return res.redirect(`${config.cors.origin}/dashboard`);
-      });
+      // Redirect to dashboard - session will be automatically saved
+      return res.redirect(`${config.cors.origin}/dashboard`);
     });
   })(req, res, next);
 });
@@ -126,7 +129,6 @@ router.get("/status", (req, res) => {
     authenticated: isAuth,
     sessionID: req.sessionID,
     user: req.user ? { id: req.user.id, username: req.user.username } : null,
-    session: req.session,
   });
 
   res.json({
@@ -140,135 +142,6 @@ router.get("/status", (req, res) => {
           avatar: req.user.avatar,
         }
       : null,
-  });
-});
-
-// Test endpoint to manually set user in session (for debugging)
-router.get("/test-login", (req, res) => {
-  const testUser = {
-    id: "test123",
-    username: "testuser",
-    displayName: "Test User",
-    email: "test@example.com",
-    avatar: "https://via.placeholder.com/40",
-  };
-
-  console.log("Test login - Before login:", {
-    sessionID: req.sessionID,
-    isAuthenticated: req.isAuthenticated(),
-    session: req.session,
-  });
-
-  req.logIn(testUser, (err) => {
-    if (err) {
-      console.error("Test login error:", err);
-      return res.json({ error: "Test login failed", details: err.message });
-    }
-
-    console.log("Test login - After login:", {
-      sessionID: req.sessionID,
-      isAuthenticated: req.isAuthenticated(),
-      user: req.user,
-    });
-
-    req.session.save((saveErr) => {
-      if (saveErr) {
-        console.error("Session save error:", saveErr);
-        return res.json({
-          error: "Session save failed",
-          details: saveErr.message,
-        });
-      }
-
-      // Manually set the session cookie
-      res.cookie("test-case-generator.sid", req.sessionID, {
-        secure: process.env.NODE_ENV === "production",
-        httpOnly: false,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-        domain: undefined,
-      });
-
-      console.log("Test login - Session saved successfully");
-      res.json({
-        success: true,
-        message: "Test user logged in",
-        user: testUser,
-        sessionID: req.sessionID,
-        cookieSet: true,
-      });
-    });
-  });
-});
-
-// Test endpoint to check session after login
-router.get("/test-session", (req, res) => {
-  console.log("Test session check:", {
-    sessionID: req.sessionID,
-    isAuthenticated: req.isAuthenticated(),
-    user: req.user,
-    session: req.session,
-    cookies: req.cookies,
-    headers: req.headers.cookie,
-  });
-
-  res.json({
-    sessionID: req.sessionID,
-    isAuthenticated: req.isAuthenticated(),
-    user: req.user,
-    message: "Session check completed",
-    cookies: req.cookies,
-    cookieHeader: req.headers.cookie,
-  });
-});
-
-// Test endpoint to set a simple session value
-router.get("/test-session-set", (req, res) => {
-  req.session.testValue = "test-session-data";
-  req.session.testTime = new Date().toISOString();
-
-  console.log("Session set:", {
-    sessionID: req.sessionID,
-    testValue: req.session.testValue,
-    testTime: req.session.testTime,
-  });
-
-  // Manually set the session cookie
-  res.cookie("test-case-generator.sid", req.sessionID, {
-    secure: process.env.NODE_ENV === "production",
-    httpOnly: false,
-    maxAge: 24 * 60 * 60 * 1000,
-    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-    domain: undefined,
-  });
-
-  res.json({
-    success: true,
-    message: "Session value set",
-    sessionID: req.sessionID,
-    testValue: req.session.testValue,
-    testTime: req.session.testTime,
-    cookieSet: true,
-  });
-});
-
-// Test endpoint to get the session value
-router.get("/test-session-get", (req, res) => {
-  console.log("Session get:", {
-    sessionID: req.sessionID,
-    testValue: req.session.testValue,
-    testTime: req.session.testTime,
-    cookies: req.cookies,
-    cookieHeader: req.headers.cookie,
-  });
-
-  res.json({
-    sessionID: req.sessionID,
-    testValue: req.session.testValue,
-    testTime: req.session.testTime,
-    message: "Session value retrieved",
-    cookies: req.cookies,
-    cookieHeader: req.headers.cookie,
   });
 });
 
