@@ -198,6 +198,8 @@ router.get("/test-session", (req, res) => {
     isAuthenticated: req.isAuthenticated(),
     user: req.user,
     session: req.session,
+    cookies: req.cookies,
+    headers: req.headers.cookie,
   });
 
   res.json({
@@ -205,6 +207,48 @@ router.get("/test-session", (req, res) => {
     isAuthenticated: req.isAuthenticated(),
     user: req.user,
     message: "Session check completed",
+    cookies: req.cookies,
+    cookieHeader: req.headers.cookie,
+  });
+});
+
+// Test endpoint to set a simple session value
+router.get("/test-session-set", (req, res) => {
+  req.session.testValue = "test-session-data";
+  req.session.testTime = new Date().toISOString();
+
+  console.log("Session set:", {
+    sessionID: req.sessionID,
+    testValue: req.session.testValue,
+    testTime: req.session.testTime,
+  });
+
+  res.json({
+    success: true,
+    message: "Session value set",
+    sessionID: req.sessionID,
+    testValue: req.session.testValue,
+    testTime: req.session.testTime,
+  });
+});
+
+// Test endpoint to get the session value
+router.get("/test-session-get", (req, res) => {
+  console.log("Session get:", {
+    sessionID: req.sessionID,
+    testValue: req.session.testValue,
+    testTime: req.session.testTime,
+    cookies: req.cookies,
+    cookieHeader: req.headers.cookie,
+  });
+
+  res.json({
+    sessionID: req.sessionID,
+    testValue: req.session.testValue,
+    testTime: req.session.testTime,
+    message: "Session value retrieved",
+    cookies: req.cookies,
+    cookieHeader: req.headers.cookie,
   });
 });
 

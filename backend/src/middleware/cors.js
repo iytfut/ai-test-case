@@ -35,6 +35,7 @@ const corsOptions = {
     "Cookie",
   ],
   exposedHeaders: ["Content-Range", "X-Content-Range", "Set-Cookie"],
+  preflightContinue: false,
   optionsSuccessStatus: 200, // Some legacy browsers choke on 204
 };
 
