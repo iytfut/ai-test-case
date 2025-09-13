@@ -58,9 +58,10 @@ app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 app.use(
   session({
     secret: config.session.secret,
-    resave: false,
-    saveUninitialized: false,
+    resave: config.session.resave,
+    saveUninitialized: config.session.saveUninitialized,
     cookie: config.session.cookie,
+    name: "test-case-generator.sid", // Custom session name
   })
 );
 
@@ -77,6 +78,17 @@ app.get("/health", (req, res) => {
     status: "healthy",
     timestamp: new Date().toISOString(),
     environment: config.nodeEnv,
+  });
+});
+
+// Debug endpoint for session testing
+app.get("/debug/session", (req, res) => {
+  res.json({
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user,
+    session: req.session,
+    cookies: req.cookies,
   });
 });
 

@@ -20,6 +20,14 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     checkAuthStatus();
+
+    // Check if we're returning from OAuth callback
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get("error")) {
+      const error = urlParams.get("error");
+      console.error("OAuth error:", error);
+      toast.error(`Authentication failed: ${error}`);
+    }
   }, []);
 
   const checkAuthStatus = async () => {

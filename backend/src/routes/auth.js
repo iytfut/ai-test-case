@@ -54,7 +54,29 @@ passport.deserializeUser((user, done) => {
 router.get("/login", isNotAuthenticated, authenticateGitHub);
 
 // GitHub OAuth callback
-router.get("/callback", authenticateGitHubCallback);
+router.get("/callback", (req, res, next) => {
+  passport.authenticate("github", (err, user, info) => {
+    if (err) {
+      console.error("GitHub OAuth error:", err);
+      return res.redirect(`${config.cors.origin}/login?error=oauth_error`);
+    }
+
+    if (!user) {
+      console.error("GitHub OAuth failed:", info);
+      return res.redirect(`${config.cors.origin}/login?error=oauth_failed`);
+    }
+
+    req.logIn(user, (loginErr) => {
+      if (loginErr) {
+        console.error("Login error:", loginErr);
+        return res.redirect(`${config.cors.origin}/login?error=login_failed`);
+      }
+
+      console.log("User logged in successfully:", user.username);
+      return res.redirect(`${config.cors.origin}/dashboard`);
+    });
+  })(req, res, next);
+});
 
 // Logout route
 router.get("/logout", (req, res) => {
@@ -86,9 +108,17 @@ router.get("/user", isAuthenticated, (req, res) => {
 
 // Check authentication status
 router.get("/status", (req, res) => {
+  const isAuth = req.isAuthenticated();
+  console.log("Auth status check:", {
+    authenticated: isAuth,
+    sessionID: req.sessionID,
+    user: req.user ? { id: req.user.id, username: req.user.username } : null,
+    session: req.session,
+  });
+
   res.json({
-    authenticated: req.isAuthenticated(),
-    user: req.isAuthenticated()
+    authenticated: isAuth,
+    user: isAuth
       ? {
           id: req.user.id,
           username: req.user.username,
