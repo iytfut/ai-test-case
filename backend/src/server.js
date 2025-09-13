@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
@@ -7,6 +6,7 @@ import session from "express-session";
 import passport from "passport";
 import rateLimit from "express-rate-limit";
 import { config } from "./config/database.js";
+import corsMiddleware from "./middleware/cors.js";
 
 // Import routes
 import authRoutes from "./routes/auth.js";
@@ -29,13 +29,8 @@ app.use(
   })
 );
 
-// CORS configuration
-app.use(
-  cors({
-    origin: config.cors.origin,
-    credentials: config.cors.credentials,
-  })
-);
+// Enhanced CORS configuration
+app.use(corsMiddleware);
 
 // Compression middleware
 app.use(compression());
