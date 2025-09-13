@@ -8,7 +8,7 @@ const corsOptions = {
 
     const allowedOrigins = [
       process.env.FRONTEND_URL,
-      "https://your-frontend-app-name.vercel.app", // Replace with actual Vercel URL
+      "https://ai-test-case-nu.vercel.app", // Replace with actual Vercel URL
       "http://localhost:5173", // For local development
       "http://localhost:3000", // Alternative local port
     ].filter(Boolean); // Remove undefined values

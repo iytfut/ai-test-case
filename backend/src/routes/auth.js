@@ -66,7 +66,7 @@ router.get("/logout", (req, res) => {
     res.json({
       success: true,
       message: "Logged out successfully",
-      redirectUrl: "http://localhost:5173/",
+      redirectUrl: config.cors.origin || "http://localhost:5173/",
     });
   });
 });
