@@ -23,8 +23,8 @@ export const authenticateGitHub = passport.authenticate("github", {
 
 // Middleware to handle GitHub callback
 export const authenticateGitHubCallback = passport.authenticate("github", {
-  failureRedirect: "http://localhost:5173/login",
-  successRedirect: "http://localhost:5173/dashboard",
+  failureRedirect: "ai-test-case-nu.vercel.app/login",
+  successRedirect: "ai-test-case-nu.vercel.app/dashboard",
 });
 
 // Middleware to serialize user for session
