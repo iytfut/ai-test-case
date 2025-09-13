@@ -73,7 +73,17 @@ Click "Create Web Service" and wait for deployment to complete.
 
 #### 2.2 Set Environment Variables in Vercel
 
+**Option A: Via Vercel Dashboard**
 Go to your project → Settings → Environment Variables and add:
+
+```
+VITE_API_URL=https://your-backend-app-name.onrender.com/api
+VITE_APP_NAME=TestCase Generator
+VITE_APP_VERSION=1.0.0
+```
+
+**Option B: Via .env.local file**
+Update the `frontend/.env.local` file with your actual backend URL:
 
 ```
 VITE_API_URL=https://your-backend-app-name.onrender.com/api
