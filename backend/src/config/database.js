@@ -23,7 +23,7 @@ export const config = {
     saveUninitialized: true, // Force a session that is "uninitialized" to be saved to the store
     cookie: {
       secure: process.env.NODE_ENV === "production",
-      httpOnly: true,
+      httpOnly: false, // Allow client-side access for debugging
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
       domain: undefined, // Don't set domain for cross-origin requests

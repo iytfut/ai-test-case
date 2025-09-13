@@ -180,12 +180,22 @@ router.get("/test-login", (req, res) => {
         });
       }
 
+      // Manually set the session cookie
+      res.cookie("test-case-generator.sid", req.sessionID, {
+        secure: process.env.NODE_ENV === "production",
+        httpOnly: false,
+        maxAge: 24 * 60 * 60 * 1000,
+        sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+        domain: undefined,
+      });
+
       console.log("Test login - Session saved successfully");
       res.json({
         success: true,
         message: "Test user logged in",
         user: testUser,
         sessionID: req.sessionID,
+        cookieSet: true,
       });
     });
   });
@@ -223,12 +233,22 @@ router.get("/test-session-set", (req, res) => {
     testTime: req.session.testTime,
   });
 
+  // Manually set the session cookie
+  res.cookie("test-case-generator.sid", req.sessionID, {
+    secure: process.env.NODE_ENV === "production",
+    httpOnly: false,
+    maxAge: 24 * 60 * 60 * 1000,
+    sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+    domain: undefined,
+  });
+
   res.json({
     success: true,
     message: "Session value set",
     sessionID: req.sessionID,
     testValue: req.session.testValue,
     testTime: req.session.testTime,
+    cookieSet: true,
   });
 });
 
