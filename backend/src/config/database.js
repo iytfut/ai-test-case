@@ -19,8 +19,8 @@ export const config = {
   // Session Configuration
   session: {
     secret: process.env.SESSION_SECRET || "your-session-secret-key",
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Force session to be saved back to session store
+    saveUninitialized: true, // Force a session that is "uninitialized" to be saved to the store
     cookie: {
       secure: process.env.NODE_ENV === "production",
       httpOnly: true,

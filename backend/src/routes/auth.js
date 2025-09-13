@@ -42,11 +42,13 @@ passport.use(
 
 // Serialize user for session
 passport.serializeUser((user, done) => {
+  console.log("Serializing user:", user.username, user.id);
   done(null, user);
 });
 
 // Deserialize user from session
 passport.deserializeUser((user, done) => {
+  console.log("Deserializing user:", user ? user.username : "no user");
   done(null, user);
 });
 
@@ -72,8 +74,19 @@ router.get("/callback", (req, res, next) => {
         return res.redirect(`${config.cors.origin}/login?error=login_failed`);
       }
 
-      console.log("User logged in successfully:", user.username);
-      return res.redirect(`${config.cors.origin}/dashboard`);
+      // Save the session explicitly
+      req.session.save((saveErr) => {
+        if (saveErr) {
+          console.error("Session save error:", saveErr);
+          return res.redirect(
+            `${config.cors.origin}/login?error=session_save_failed`
+          );
+        }
+
+        console.log("User logged in successfully:", user.username);
+        console.log("Session saved, user in session:", req.user);
+        return res.redirect(`${config.cors.origin}/dashboard`);
+      });
     });
   })(req, res, next);
 });
@@ -127,6 +140,39 @@ router.get("/status", (req, res) => {
           avatar: req.user.avatar,
         }
       : null,
+  });
+});
+
+// Test endpoint to manually set user in session (for debugging)
+router.get("/test-login", (req, res) => {
+  const testUser = {
+    id: "test123",
+    username: "testuser",
+    displayName: "Test User",
+    email: "test@example.com",
+    avatar: "https://via.placeholder.com/40",
+  };
+
+  req.logIn(testUser, (err) => {
+    if (err) {
+      return res.json({ error: "Test login failed", details: err.message });
+    }
+
+    req.session.save((saveErr) => {
+      if (saveErr) {
+        return res.json({
+          error: "Session save failed",
+          details: saveErr.message,
+        });
+      }
+
+      res.json({
+        success: true,
+        message: "Test user logged in",
+        user: testUser,
+        sessionID: req.sessionID,
+      });
+    });
   });
 });
 
