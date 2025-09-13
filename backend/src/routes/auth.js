@@ -153,19 +153,34 @@ router.get("/test-login", (req, res) => {
     avatar: "https://via.placeholder.com/40",
   };
 
+  console.log("Test login - Before login:", {
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+    session: req.session,
+  });
+
   req.logIn(testUser, (err) => {
     if (err) {
+      console.error("Test login error:", err);
       return res.json({ error: "Test login failed", details: err.message });
     }
 
+    console.log("Test login - After login:", {
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user,
+    });
+
     req.session.save((saveErr) => {
       if (saveErr) {
+        console.error("Session save error:", saveErr);
         return res.json({
           error: "Session save failed",
           details: saveErr.message,
         });
       }
 
+      console.log("Test login - Session saved successfully");
       res.json({
         success: true,
         message: "Test user logged in",
@@ -173,6 +188,23 @@ router.get("/test-login", (req, res) => {
         sessionID: req.sessionID,
       });
     });
+  });
+});
+
+// Test endpoint to check session after login
+router.get("/test-session", (req, res) => {
+  console.log("Test session check:", {
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user,
+    session: req.session,
+  });
+
+  res.json({
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+    user: req.user,
+    message: "Session check completed",
   });
 });
 
