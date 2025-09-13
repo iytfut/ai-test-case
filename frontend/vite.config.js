@@ -6,7 +6,15 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false,
-    minify: "terser",
+    minify: "esbuild", // Use esbuild instead of terser for better compatibility
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ["react", "react-dom"],
+          router: ["react-router-dom"],
+        },
+      },
+    },
   },
   server: {
     port: 5173,
@@ -15,5 +23,8 @@ export default defineConfig({
   preview: {
     port: 4173,
     host: true,
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom", "react-router-dom"],
   },
 });

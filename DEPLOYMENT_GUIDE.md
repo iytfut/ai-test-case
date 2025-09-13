@@ -178,6 +178,7 @@ Your app should load and be able to communicate with the backend.
 - Check that all dependencies are in `package.json`
 - Ensure build commands are correct
 - Verify Node.js version compatibility
+- **Terser Error**: If you get "terser not found" error, the Vite config has been updated to use esbuild instead
 
 ### Debug Steps:
 
