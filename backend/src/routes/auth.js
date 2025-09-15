@@ -12,6 +12,7 @@ const generateToken = (user) => {
       username: user.username,
       email: user.email,
       avatar: user.avatar,
+      accessToken: user.accessToken, // Include GitHub access token
     },
     config.jwt.secret,
     { expiresIn: "7d" }
@@ -101,6 +102,7 @@ router.get("/callback", async (req, res) => {
       displayName: userData.name || userData.login,
       email: email || `${userData.login}@users.noreply.github.com`,
       avatar: userData.avatar_url,
+      accessToken: tokenData.access_token, // Store GitHub access token
     };
 
     // Generate JWT token
@@ -141,6 +143,7 @@ router.get("/status", (req, res) => {
           displayName: decoded.displayName,
           email: decoded.email,
           avatar: decoded.avatar,
+          accessToken: decoded.accessToken,
         },
       });
     } catch (error) {
