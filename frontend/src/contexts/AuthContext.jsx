@@ -66,6 +66,11 @@ export const AuthProvider = ({ children }) => {
     const token = urlParams.get("token");
     const userData = urlParams.get("user");
 
+    console.log("OAuth callback received:", {
+      token: !!token,
+      userData: !!userData,
+    });
+
     if (token && userData) {
       try {
         const user = JSON.parse(userData);
@@ -73,17 +78,17 @@ export const AuthProvider = ({ children }) => {
         setUser(user);
         setLoading(false);
 
-        // Clear URL parameters
-        window.history.replaceState(
-          {},
-          document.title,
-          window.location.pathname
-        );
+        // Clear URL parameters and redirect to dashboard
+        window.history.replaceState({}, document.title, "/dashboard");
+
+        // Force a page reload to ensure clean state
+        window.location.href = "/dashboard";
 
         toast.success("Login successful!");
       } catch (error) {
         console.error("Error parsing user data:", error);
         toast.error("Login failed");
+        setLoading(false);
       }
     } else if (urlParams.get("error")) {
       const error = urlParams.get("error");
@@ -92,7 +97,10 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
 
       // Clear URL parameters
-      window.history.replaceState({}, document.title, window.location.pathname);
+      window.history.replaceState({}, document.title, "/login");
+    } else {
+      // No OAuth callback parameters, just check auth status
+      setLoading(false);
     }
   };
 

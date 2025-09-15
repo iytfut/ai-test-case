@@ -52,7 +52,7 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <div>
@@ -63,7 +63,7 @@ const App = () => {
               }
             />
             <Route
-              path="/dashboard"
+              path="/"
               element={
                 <ProtectedRoute>
                   <div>
