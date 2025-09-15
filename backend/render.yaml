@@ -10,10 +10,8 @@ services:
         value: production
       - key: PORT
         value: 10000
-      - key: SESSION_SECRET
+      - key: JWT_SECRET
         generateValue: true
-      - key: MONGODB_URI
-        value: mongodb+srv://lionelsatyamcr7_db_user:7iVscShSRt7HiSXU@cluster0.sxet0dp.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
       - key: GITHUB_CLIENT_ID
         value: Ov23libkyl5INl7I4oKo
       - key: GITHUB_CLIENT_SECRET

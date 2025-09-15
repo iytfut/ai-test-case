@@ -19,125 +19,95 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage first for existing auth data
-    const storedToken = localStorage.getItem("auth_token");
-    const storedUser = localStorage.getItem("user_data");
-
-    if (storedToken && storedUser) {
-      try {
-        const userData = JSON.parse(storedUser);
-        setUser(userData);
-        setLoading(false);
-        return;
-      } catch (error) {
-        console.error("Error parsing stored user data:", error);
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_data");
-      }
-    }
-
     checkAuthStatus();
-
-    // Check if we're returning from OAuth callback
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get("error")) {
-      const error = urlParams.get("error");
-      console.error("OAuth error:", error);
-      toast.error(`Authentication failed: ${error}`);
-      // Clear the error from URL
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
+    handleOAuthCallback();
   }, []);
 
   const checkAuthStatus = async () => {
     try {
-      // Get token from localStorage
       const token = localStorage.getItem("auth_token");
 
-      const headers = {
-        "Content-Type": "application/json",
-      };
-
-      // Add Authorization header if token exists
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
+      if (!token) {
+        setUser(null);
+        setLoading(false);
+        return;
       }
 
       const response = await fetch(`${API_BASE_URL}/auth/status`, {
-        credentials: "include",
-        headers,
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
       });
 
       if (response.ok) {
         const data = await response.json();
-        console.log("Auth status response:", data);
         if (data.authenticated && data.user) {
           setUser(data.user);
         } else {
+          localStorage.removeItem("auth_token");
           setUser(null);
         }
       } else {
-        console.error("Auth check failed with status:", response.status);
+        localStorage.removeItem("auth_token");
         setUser(null);
       }
     } catch (error) {
       console.error("Auth check failed:", error);
+      localStorage.removeItem("auth_token");
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
 
-  const login = async () => {
-    try {
-      // Redirect to GitHub OAuth
-      window.location.href = `${API_BASE_URL}/auth/login`;
-    } catch (error) {
-      console.error("Login failed:", error);
-      toast.error("Failed to initiate login");
+  const handleOAuthCallback = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get("token");
+    const userData = urlParams.get("user");
+
+    if (token && userData) {
+      try {
+        const user = JSON.parse(userData);
+        localStorage.setItem("auth_token", token);
+        setUser(user);
+        setLoading(false);
+
+        // Clear URL parameters
+        window.history.replaceState(
+          {},
+          document.title,
+          window.location.pathname
+        );
+
+        toast.success("Login successful!");
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        toast.error("Login failed");
+      }
+    } else if (urlParams.get("error")) {
+      const error = urlParams.get("error");
+      console.error("OAuth error:", error);
+      toast.error(`Login failed: ${error}`);
+      setLoading(false);
+
+      // Clear URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
     }
   };
 
-  const handleOAuthCallback = (userData) => {
-    setUser(userData);
-    setLoading(false);
+  const login = () => {
+    window.location.href = `${API_BASE_URL}/auth/login`;
   };
 
   const logout = async () => {
     try {
-      // Clear localStorage
       localStorage.removeItem("auth_token");
-      localStorage.removeItem("user_data");
-
-      // Clear user state immediately
       setUser(null);
       toast.success("Logged out successfully");
-
-      // Optional: Call backend logout endpoint
-      try {
-        const token = localStorage.getItem("auth_token");
-        const headers = {
-          "Content-Type": "application/json",
-        };
-
-        if (token) {
-          headers["Authorization"] = `Bearer ${token}`;
-        }
-
-        await fetch(`${API_BASE_URL}/auth/logout`, {
-          method: "POST",
-          credentials: "include",
-          headers,
-        });
-      } catch (backendError) {
-        console.log(
-          "Backend logout failed, but local logout succeeded:",
-          backendError
-        );
-      }
     } catch (error) {
       console.error("Logout failed:", error);
-      toast.error("Failed to logout");
+      toast.error("Logout failed");
     }
   };
 
@@ -146,8 +116,6 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
-    checkAuthStatus,
-    handleOAuthCallback,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

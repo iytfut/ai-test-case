@@ -2,8 +2,6 @@ import express from "express";
 import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
-import session from "express-session";
-import passport from "passport";
 import rateLimit from "express-rate-limit";
 import { config } from "./config/database.js";
 import corsMiddleware from "./middleware/cors.js";
@@ -54,60 +52,6 @@ app.use("/api/", limiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Session configuration - using MongoDB store for production
-let sessionStore;
-if (config.nodeEnv === "production" && config.mongodb?.uri) {
-  try {
-    const MongoStore = (await import("connect-mongo")).default;
-    sessionStore = MongoStore.create({
-      mongoUrl: config.mongodb.uri,
-      collectionName: "sessions",
-      ttl: 24 * 60 * 60, // 24 hours
-    });
-    console.log("✅ Using MongoDB session store for production");
-  } catch (error) {
-    console.warn(
-      "⚠️ MongoDB session store failed, falling back to memory store:",
-      error.message
-    );
-    sessionStore = undefined;
-  }
-} else {
-  console.log(
-    "ℹ️ Using memory session store (sessions will be lost on server restart)"
-  );
-}
-
-// Configure session
-const sessionConfig = {
-  ...config.session,
-  ...(sessionStore && { store: sessionStore }),
-};
-
-console.log("Session configuration:", {
-  resave: sessionConfig.resave,
-  saveUninitialized: sessionConfig.saveUninitialized,
-  hasStore: !!sessionConfig.store,
-  cookie: sessionConfig.cookie,
-});
-
-app.use(session(sessionConfig));
-
-// Passport middleware (must be after session)
-app.use(passport.initialize());
-app.use(passport.session());
-
-// Add session debugging middleware (after passport)
-app.use((req, res, next) => {
-  console.log("Session middleware - Request:", {
-    sessionID: req.sessionID,
-    isAuthenticated: req.isAuthenticated(),
-    hasUser: !!req.user,
-    url: req.url,
-  });
-  next();
-});
-
 // Static files
 app.use(express.static("public"));
 
@@ -153,13 +97,6 @@ app.get("/debug/session-store", (req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/github", githubRoutes);
 app.use("/api/ai", aiRoutes);
-
-// GitHub OAuth callback redirect (for incorrect callback URLs)
-app.get("/auth/github/callback", (req, res) => {
-  // Redirect to the correct callback URL
-  const queryString = req.url.split("?")[1] || "";
-  res.redirect(`/api/auth/callback?${queryString}`);
-});
 
 // Root endpoint
 app.get("/", (req, res) => {

@@ -7,11 +7,6 @@ export const config = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || "development",
 
-  // Database Configuration
-  mongodb: {
-    uri: process.env.MONGODB_URI,
-  },
-
   // GitHub OAuth Configuration
   github: {
     clientId: process.env.GITHUB_CLIENT_ID,
@@ -21,21 +16,12 @@ export const config = {
       "http://localhost:5000/api/auth/callback",
   },
 
-  // Session Configuration
-  session: {
+  // JWT Configuration
+  jwt: {
     secret:
+      process.env.JWT_SECRET ||
       process.env.SESSION_SECRET ||
-      "your-session-secret-key-change-this-in-production",
-    resave: true, // Force session to be saved back to session store
-    saveUninitialized: true, // Force a session that is "uninitialized" to be saved to the store
-    cookie: {
-      secure: process.env.NODE_ENV === "production",
-      httpOnly: true, // Security: prevent XSS attacks
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
-      domain: process.env.NODE_ENV === "production" ? undefined : undefined,
-    },
-    name: "test-case-generator.sid", // Custom session name
+      "your-jwt-secret-key-change-this-in-production",
   },
 
   // AI API Configuration
