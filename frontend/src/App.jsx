@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import RepositoryView from "./pages/RepositoryView";
 import TestGenerator from "./pages/TestGenerator";
 import Navbar from "./components/Navbar";
+import AuthCallback from "./components/AuthCallback";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import "./App.css";
 
@@ -49,6 +50,7 @@ const App = () => {
           />
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/"
               element={

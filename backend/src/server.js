@@ -3,7 +3,6 @@ import helmet from "helmet";
 import compression from "compression";
 import morgan from "morgan";
 import session from "express-session";
-import MongoStore from "connect-mongo";
 import passport from "passport";
 import rateLimit from "express-rate-limit";
 import { config } from "./config/database.js";
@@ -55,33 +54,52 @@ app.use("/api/", limiter);
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Session configuration with MongoDB store (fallback to memory store if MongoDB unavailable)
+// Session configuration - using MongoDB store for production
 let sessionStore;
-try {
-  sessionStore = MongoStore.create({
-    mongoUrl:
-      process.env.MONGODB_URI ||
-      "mongodb://localhost:27017/test-case-generator",
-    collectionName: "sessions",
-    ttl: 24 * 60 * 60, // 24 hours
-    touchAfter: 24 * 3600, // lazy session update
-  });
-  console.log("✅ MongoDB session store initialized");
-} catch (error) {
-  console.warn("⚠️ MongoDB not available, using memory store:", error.message);
-  sessionStore = undefined; // Will use default memory store
+if (config.nodeEnv === "production" && config.mongodb?.uri) {
+  try {
+    const MongoStore = (await import("connect-mongo")).default;
+    sessionStore = MongoStore.create({
+      mongoUrl: config.mongodb.uri,
+      collectionName: "sessions",
+      ttl: 24 * 60 * 60, // 24 hours
+    });
+    console.log("✅ Using MongoDB session store for production");
+  } catch (error) {
+    console.warn(
+      "⚠️ MongoDB session store failed, falling back to memory store:",
+      error.message
+    );
+    sessionStore = undefined;
+  }
+} else {
+  console.log(
+    "ℹ️ Using memory session store (sessions will be lost on server restart)"
+  );
 }
 
-app.use(
-  session({
-    ...config.session,
-    store: sessionStore,
-  })
-);
+// Configure session
+const sessionConfig = {
+  ...config.session,
+  ...(sessionStore && { store: sessionStore }),
+};
 
-// Passport middleware
+app.use(session(sessionConfig));
+
+// Passport middleware (must be after session)
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Add session debugging middleware (after passport)
+app.use((req, res, next) => {
+  console.log("Session middleware - Request:", {
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+    hasUser: !!req.user,
+    url: req.url,
+  });
+  next();
+});
 
 // Static files
 app.use(express.static("public"));
@@ -115,7 +133,7 @@ app.get("/debug/session", (req, res) => {
 app.get("/debug/session-store", (req, res) => {
   res.json({
     message: "Session store debug endpoint",
-    storeType: sessionStore ? "MongoDB" : "Memory",
+    storeType: "Memory",
     currentSession: {
       id: req.sessionID,
       isAuthenticated: req.isAuthenticated(),

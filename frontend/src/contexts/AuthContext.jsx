@@ -19,6 +19,23 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // Check localStorage first for existing auth data
+    const storedToken = localStorage.getItem("auth_token");
+    const storedUser = localStorage.getItem("user_data");
+
+    if (storedToken && storedUser) {
+      try {
+        const userData = JSON.parse(storedUser);
+        setUser(userData);
+        setLoading(false);
+        return;
+      } catch (error) {
+        console.error("Error parsing stored user data:", error);
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("user_data");
+      }
+    }
+
     checkAuthStatus();
 
     // Check if we're returning from OAuth callback
@@ -71,8 +88,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const handleOAuthCallback = (userData) => {
+    setUser(userData);
+    setLoading(false);
+  };
+
   const logout = async () => {
     try {
+      // Clear localStorage
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_data");
+
       const response = await fetch(`${API_BASE_URL}/auth/logout`, {
         credentials: "include",
       });
@@ -101,6 +127,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     checkAuthStatus,
+    handleOAuthCallback,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

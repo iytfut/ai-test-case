@@ -11,6 +11,12 @@ import { config } from "../config/database.js";
 const router = express.Router();
 
 // GitHub OAuth Strategy setup
+console.log("Setting up GitHub OAuth strategy with config:", {
+  clientID: config.github.clientId ? "***" : "MISSING",
+  clientSecret: config.github.clientSecret ? "***" : "MISSING",
+  callbackURL: config.github.callbackUrl,
+});
+
 passport.use(
   new (await import("passport-github2")).Strategy(
     {
@@ -21,6 +27,14 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log("GitHub OAuth strategy callback received:", {
+          profileId: profile.id,
+          username: profile.username,
+          displayName: profile.displayName,
+          email: profile.emails?.[0]?.value,
+          hasAccessToken: !!accessToken,
+        });
+
         // Store user profile and access token
         const user = {
           id: profile.id,
@@ -32,8 +46,15 @@ passport.use(
           refreshToken: refreshToken,
         };
 
+        console.log("Created user object:", {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+        });
+
         return done(null, user);
       } catch (error) {
+        console.error("Error in GitHub OAuth strategy:", error);
         return done(error, null);
       }
     }
@@ -66,7 +87,20 @@ router.get("/login", isNotAuthenticated, authenticateGitHub);
 
 // GitHub OAuth callback
 router.get("/callback", (req, res, next) => {
+  console.log("GitHub OAuth callback received");
+  console.log("Query params:", req.query);
+  console.log("Session before auth:", {
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+  });
+
   passport.authenticate("github", (err, user, info) => {
+    console.log("Passport authenticate callback:", {
+      err,
+      user: user ? { id: user.id, username: user.username } : null,
+      info,
+    });
+
     if (err) {
       console.error("GitHub OAuth error:", err);
       return res.redirect(`${config.cors.origin}/login?error=oauth_error`);
@@ -77,19 +111,59 @@ router.get("/callback", (req, res, next) => {
       return res.redirect(`${config.cors.origin}/login?error=oauth_failed`);
     }
 
+    console.log("Attempting to log in user:", {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+    });
+
     // Log in the user
     req.logIn(user, (loginErr) => {
       if (loginErr) {
-        console.error("Login error:", loginErr);
+        console.error("Login error details:", {
+          message: loginErr.message,
+          stack: loginErr.stack,
+          name: loginErr.name,
+        });
         return res.redirect(`${config.cors.origin}/login?error=login_failed`);
       }
 
       console.log("User logged in successfully:", user.username);
-      console.log("Session ID:", req.sessionID);
-      console.log("User in session:", req.user);
+      console.log("Session after login:", {
+        sessionID: req.sessionID,
+        isAuthenticated: req.isAuthenticated(),
+        user: req.user
+          ? { id: req.user.id, username: req.user.username }
+          : null,
+      });
 
-      // Redirect to dashboard - session will be automatically saved
-      return res.redirect(`${config.cors.origin}/dashboard`);
+      try {
+        // Generate JWT token
+        const token = generateToken(user);
+
+        // Create user data for frontend
+        const userData = {
+          id: user.id,
+          username: user.username,
+          displayName: user.displayName,
+          email: user.email,
+          avatar: user.avatar,
+        };
+
+        console.log("Generated token for user:", user.username);
+
+        // Redirect to frontend with token and user data
+        const redirectUrl = new URL(`${config.cors.origin}/auth/callback`);
+        redirectUrl.searchParams.set("token", token);
+        redirectUrl.searchParams.set("user", JSON.stringify(userData));
+
+        return res.redirect(redirectUrl.toString());
+      } catch (error) {
+        console.error("Token generation error:", error);
+        return res.redirect(
+          `${config.cors.origin}/login?error=token_generation_failed`
+        );
+      }
     });
   })(req, res, next);
 });
@@ -129,6 +203,7 @@ router.get("/status", (req, res) => {
     authenticated: isAuth,
     sessionID: req.sessionID,
     user: req.user ? { id: req.user.id, username: req.user.username } : null,
+    session: req.session,
   });
 
   res.json({
@@ -142,6 +217,48 @@ router.get("/status", (req, res) => {
           avatar: req.user.avatar,
         }
       : null,
+  });
+});
+
+// Test endpoint to manually set a user in session (for debugging)
+router.get("/test-login", (req, res) => {
+  const testUser = {
+    id: "test123",
+    username: "testuser",
+    displayName: "Test User",
+    email: "test@example.com",
+    avatar: "https://via.placeholder.com/40",
+  };
+
+  console.log("Test login - Before login:", {
+    sessionID: req.sessionID,
+    isAuthenticated: req.isAuthenticated(),
+  });
+
+  req.logIn(testUser, (err) => {
+    if (err) {
+      console.error("Test login error:", err);
+      return res.json({
+        success: false,
+        error: "Test login failed",
+        details: err.message,
+        stack: err.stack,
+      });
+    }
+
+    console.log("Test login - After login:", {
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user,
+    });
+
+    res.json({
+      success: true,
+      message: "Test user logged in",
+      user: testUser,
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+    });
   });
 });
 

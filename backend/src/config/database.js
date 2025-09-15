@@ -7,6 +7,11 @@ export const config = {
   port: process.env.PORT || 5000,
   nodeEnv: process.env.NODE_ENV || "development",
 
+  // Database Configuration
+  mongodb: {
+    uri: process.env.MONGODB_URI,
+  },
+
   // GitHub OAuth Configuration
   github: {
     clientId: process.env.GITHUB_CLIENT_ID,
