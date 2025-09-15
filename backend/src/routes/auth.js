@@ -55,9 +55,9 @@ router.get("/callback", async (req, res) => {
 
     if (tokenData.error) {
       console.error("GitHub token exchange error:", tokenData);
-      return res.redirect(
-        `${config.cors.origin}/login?error=token_exchange_failed`
-      );
+      const frontendUrl =
+        config.cors.origin || "https://ai-test-case-nu.vercel.app";
+      return res.redirect(`${frontendUrl}/login?error=token_exchange_failed`);
     }
 
     // Get user data from GitHub
@@ -72,7 +72,9 @@ router.get("/callback", async (req, res) => {
 
     if (!userData.id) {
       console.error("GitHub user data error:", userData);
-      return res.redirect(`${config.cors.origin}/login?error=user_data_failed`);
+      const frontendUrl =
+        config.cors.origin || "https://ai-test-case-nu.vercel.app";
+      return res.redirect(`${frontendUrl}/login?error=user_data_failed`);
     }
 
     // Get user email
@@ -109,20 +111,27 @@ router.get("/callback", async (req, res) => {
     const token = generateToken(user);
 
     // Redirect to frontend with token and user data
-    const redirectUrl = new URL(`${config.cors.origin}/auth/callback`);
+    const frontendUrl =
+      config.cors.origin || "https://ai-test-case-nu.vercel.app";
+    const redirectUrl = new URL(`${frontendUrl}/auth/callback`);
     redirectUrl.searchParams.set("token", token);
     redirectUrl.searchParams.set("user", JSON.stringify(user));
 
     console.log("OAuth success:", {
       username: user.username,
       email: user.email,
+      frontendUrl: frontendUrl,
       redirectUrl: redirectUrl.toString(),
+      tokenLength: token.length,
+      userDataLength: JSON.stringify(user).length,
     });
 
     res.redirect(redirectUrl.toString());
   } catch (error) {
     console.error("OAuth callback error:", error);
-    res.redirect(`${config.cors.origin}/login?error=callback_failed`);
+    const frontendUrl =
+      config.cors.origin || "https://ai-test-case-nu.vercel.app";
+    res.redirect(`${frontendUrl}/login?error=callback_failed`);
   }
 });
 
@@ -162,6 +171,16 @@ router.post("/logout", (req, res) => {
   res.json({
     success: true,
     message: "Logged out successfully",
+  });
+});
+
+// Debug endpoint to check configuration
+router.get("/debug", (req, res) => {
+  res.json({
+    corsOrigin: config.cors.origin,
+    frontendUrl: process.env.FRONTEND_URL,
+    githubCallbackUrl: config.github.callbackUrl,
+    environment: config.nodeEnv,
   });
 });
 

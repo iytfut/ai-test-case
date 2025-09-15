@@ -69,6 +69,9 @@ export const AuthProvider = ({ children }) => {
     console.log("OAuth callback received:", {
       token: !!token,
       userData: !!userData,
+      currentUrl: window.location.href,
+      searchParams: window.location.search,
+      allParams: Object.fromEntries(urlParams.entries()),
     });
 
     if (token && userData) {
