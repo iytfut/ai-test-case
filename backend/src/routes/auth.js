@@ -124,8 +124,32 @@ router.get("/callback", (req, res, next) => {
           message: loginErr.message,
           stack: loginErr.stack,
           name: loginErr.name,
+          user: user ? { id: user.id, username: user.username } : null,
+          sessionID: req.sessionID,
+          sessionExists: !!req.session,
         });
-        return res.redirect(`${config.cors.origin}/login?error=login_failed`);
+
+        // Try alternative approach - generate token directly without session
+        console.log("Attempting fallback token generation...");
+        try {
+          const token = generateToken(user);
+          const userData = {
+            id: user.id,
+            username: user.username,
+            displayName: user.displayName,
+            email: user.email,
+            avatar: user.avatar,
+          };
+
+          const redirectUrl = new URL(`${config.cors.origin}/auth/callback`);
+          redirectUrl.searchParams.set("token", token);
+          redirectUrl.searchParams.set("user", JSON.stringify(userData));
+
+          return res.redirect(redirectUrl.toString());
+        } catch (fallbackError) {
+          console.error("Fallback token generation failed:", fallbackError);
+          return res.redirect(`${config.cors.origin}/login?error=login_failed`);
+        }
       }
 
       console.log("User logged in successfully:", user.username);
@@ -217,6 +241,30 @@ router.get("/status", (req, res) => {
           avatar: req.user.avatar,
         }
       : null,
+  });
+});
+
+// Debug OAuth configuration
+router.get("/debug-oauth", (req, res) => {
+  res.json({
+    github: {
+      clientId: config.github.clientId ? "Set" : "Missing",
+      clientSecret: config.github.clientSecret ? "Set" : "Missing",
+      callbackUrl: config.github.callbackUrl,
+    },
+    session: {
+      secret: config.session.secret ? "Set" : "Missing",
+      resave: config.session.resave,
+      saveUninitialized: config.session.saveUninitialized,
+      cookie: config.session.cookie,
+    },
+    cors: {
+      origin: config.cors.origin,
+    },
+    environment: {
+      nodeEnv: config.nodeEnv,
+      port: config.port,
+    },
   });
 });
 

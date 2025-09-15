@@ -84,6 +84,13 @@ const sessionConfig = {
   ...(sessionStore && { store: sessionStore }),
 };
 
+console.log("Session configuration:", {
+  resave: sessionConfig.resave,
+  saveUninitialized: sessionConfig.saveUninitialized,
+  hasStore: !!sessionConfig.store,
+  cookie: sessionConfig.cookie,
+});
+
 app.use(session(sessionConfig));
 
 // Passport middleware (must be after session)
