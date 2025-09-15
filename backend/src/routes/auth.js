@@ -1,5 +1,6 @@
 import express from "express";
 import passport from "passport";
+import jwt from "jsonwebtoken";
 import {
   isAuthenticated,
   isNotAuthenticated,
@@ -117,78 +118,39 @@ router.get("/callback", (req, res, next) => {
       email: user.email,
     });
 
-    // Log in the user
-    req.logIn(user, (loginErr) => {
-      if (loginErr) {
-        console.error("Login error details:", {
-          message: loginErr.message,
-          stack: loginErr.stack,
-          name: loginErr.name,
-          user: user ? { id: user.id, username: user.username } : null,
-          sessionID: req.sessionID,
-          sessionExists: !!req.session,
-        });
+    // Skip session-based login and use JWT tokens directly
+    // This avoids session store issues in production
+    console.log("Using JWT-based authentication (bypassing session login)");
 
-        // Try alternative approach - generate token directly without session
-        console.log("Attempting fallback token generation...");
-        try {
-          const token = generateToken(user);
-          const userData = {
-            id: user.id,
-            username: user.username,
-            displayName: user.displayName,
-            email: user.email,
-            avatar: user.avatar,
-          };
+    try {
+      // Generate JWT token
+      const token = generateToken(user);
 
-          const redirectUrl = new URL(`${config.cors.origin}/auth/callback`);
-          redirectUrl.searchParams.set("token", token);
-          redirectUrl.searchParams.set("user", JSON.stringify(userData));
+      // Create user data for frontend
+      const userData = {
+        id: user.id,
+        username: user.username,
+        displayName: user.displayName,
+        email: user.email,
+        avatar: user.avatar,
+      };
 
-          return res.redirect(redirectUrl.toString());
-        } catch (fallbackError) {
-          console.error("Fallback token generation failed:", fallbackError);
-          return res.redirect(`${config.cors.origin}/login?error=login_failed`);
-        }
-      }
+      console.log("Generated token for user:", user.username);
+      console.log("User data:", userData);
 
-      console.log("User logged in successfully:", user.username);
-      console.log("Session after login:", {
-        sessionID: req.sessionID,
-        isAuthenticated: req.isAuthenticated(),
-        user: req.user
-          ? { id: req.user.id, username: req.user.username }
-          : null,
-      });
+      // Redirect to frontend with token and user data
+      const redirectUrl = new URL(`${config.cors.origin}/auth/callback`);
+      redirectUrl.searchParams.set("token", token);
+      redirectUrl.searchParams.set("user", JSON.stringify(userData));
 
-      try {
-        // Generate JWT token
-        const token = generateToken(user);
-
-        // Create user data for frontend
-        const userData = {
-          id: user.id,
-          username: user.username,
-          displayName: user.displayName,
-          email: user.email,
-          avatar: user.avatar,
-        };
-
-        console.log("Generated token for user:", user.username);
-
-        // Redirect to frontend with token and user data
-        const redirectUrl = new URL(`${config.cors.origin}/auth/callback`);
-        redirectUrl.searchParams.set("token", token);
-        redirectUrl.searchParams.set("user", JSON.stringify(userData));
-
-        return res.redirect(redirectUrl.toString());
-      } catch (error) {
-        console.error("Token generation error:", error);
-        return res.redirect(
-          `${config.cors.origin}/login?error=token_generation_failed`
-        );
-      }
-    });
+      console.log("Redirecting to:", redirectUrl.toString());
+      return res.redirect(redirectUrl.toString());
+    } catch (error) {
+      console.error("Token generation error:", error);
+      return res.redirect(
+        `${config.cors.origin}/login?error=token_generation_failed`
+      );
+    }
   })(req, res, next);
 });
 
@@ -222,25 +184,53 @@ router.get("/user", isAuthenticated, (req, res) => {
 
 // Check authentication status
 router.get("/status", (req, res) => {
-  const isAuth = req.isAuthenticated();
+  // Check for JWT token in Authorization header
+  const authHeader = req.headers.authorization;
+  let isAuth = false;
+  let user = null;
+
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    const token = authHeader.substring(7);
+    try {
+      const decoded = jwt.verify(token, config.session.secret);
+      isAuth = true;
+      user = {
+        id: decoded.id,
+        username: decoded.username,
+        displayName: decoded.displayName,
+        email: decoded.email,
+        avatar: decoded.avatar,
+      };
+    } catch (error) {
+      console.log("JWT verification failed:", error.message);
+      isAuth = false;
+    }
+  }
+
+  // Fallback to session-based auth if no JWT token
+  if (!isAuth) {
+    isAuth = req.isAuthenticated();
+    if (isAuth && req.user) {
+      user = {
+        id: req.user.id,
+        username: req.user.username,
+        displayName: req.user.displayName,
+        email: req.user.email,
+        avatar: req.user.avatar,
+      };
+    }
+  }
+
   console.log("Auth status check:", {
     authenticated: isAuth,
+    hasJWT: !!authHeader,
     sessionID: req.sessionID,
-    user: req.user ? { id: req.user.id, username: req.user.username } : null,
-    session: req.session,
+    user: user ? { id: user.id, username: user.username } : null,
   });
 
   res.json({
     authenticated: isAuth,
-    user: isAuth
-      ? {
-          id: req.user.id,
-          username: req.user.username,
-          displayName: req.user.displayName,
-          email: req.user.email,
-          avatar: req.user.avatar,
-        }
-      : null,
+    user: user,
   });
 });
 

@@ -51,11 +51,21 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem("auth_token");
+
+      const headers = {
+        "Content-Type": "application/json",
+      };
+
+      // Add Authorization header if token exists
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE_URL}/auth/status`, {
         credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
       });
 
       if (response.ok) {
@@ -99,21 +109,31 @@ export const AuthProvider = ({ children }) => {
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user_data");
 
-      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-        credentials: "include",
-      });
+      // Clear user state immediately
+      setUser(null);
+      toast.success("Logged out successfully");
 
-      if (response.ok) {
-        const data = await response.json();
-        setUser(null);
-        toast.success("Logged out successfully");
+      // Optional: Call backend logout endpoint
+      try {
+        const token = localStorage.getItem("auth_token");
+        const headers = {
+          "Content-Type": "application/json",
+        };
 
-        // Redirect to home page
-        if (data.redirectUrl) {
-          window.location.href = data.redirectUrl;
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
         }
-      } else {
-        throw new Error("Logout failed");
+
+        await fetch(`${API_BASE_URL}/auth/logout`, {
+          method: "POST",
+          credentials: "include",
+          headers,
+        });
+      } catch (backendError) {
+        console.log(
+          "Backend logout failed, but local logout succeeded:",
+          backendError
+        );
       }
     } catch (error) {
       console.error("Logout failed:", error);
